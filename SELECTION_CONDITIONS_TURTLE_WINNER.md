@@ -102,3 +102,39 @@ R,:)?*#*%8@YDHYAD&'<,:)?<-0<D&'<%)0%!&Seb
 - **铁证（exe 明文）**：65 条公式源码来自 `Turtle Winner.exe` `.rdata`，通达信格式，直接可读，非 token 推测。
 - **铁证（dll 算子）**：`HLTHBQONLYDATA`/`ISDEPART`/`HLTDMISTATIC` 等调用壳在 exe 明文，真算法在中源问鼎/预测大师 dll（已逆 FUN_100c0f20/100cc2f0）。
 - exp token（TechnicalIndex1.exp）仍含 HLT 拐点类私有编码，但 exe 明文已覆盖行情/能量/概率/弘历信号/趋势王/背离，足够翻 Pine。
+
+
+## 8. 拐点操盘 真实数值公式（dll 反编译铁证）
+exe 明文无拐点操盘复合公式（只有名字+图表模板）。真算法在 `CompMan_chs.dll` 的 HLT 算子。已逆：
+
+### 8.1 HLTHLP 六彩神龙获利盘（拐点操盘核心，FUN_100c0b20）
+```
+for i in 0..N-1:
+    f3 = 0.0  // 获利筹码累计
+    f4 = 0.0  // 总筹码累计
+    for j in [i-100, i]:           // 窗口 100 根
+        pj = close[j]  (成本序列)
+        if pj < close[i] * 0.97:   // 阈值系数 _DAT_1015e2a8 = 0.97 (float32)
+            f3 += pj
+        f4 += pj
+    if f4 > 0:
+        out[i] = (f3 / f4) * 100.0   // 放大系数 _DAT_101511fc = 100.0
+```
+→ 窗口 100，获利阈值 close×0.97，占比×100。和中源问鼎 HLTHLP 同算法（窗口100+阈值+占比）。
+**置信度：铁证（FUN_100c0b20 反编译 + float32 常量确认 0.97 / 100.0）**
+
+### 8.2 HLTHBQ 弘历进出/趋势王（拐点操盘趋势判定，FUN_1010e8b0 / 主 FUN_1010e8b0）
+核心：取 4 个序列（param_3 下标 0/1/2/3），算通道带宽 `max(A,C)-min(C,B)`（A/B/C=3条线），
+用变系数 EMA 平滑（超过 20 根后增量式 `f2=(x-x[-20])+f2; f4=0.05*f2`，`_DAT_1015c75c=0.05` 平滑系数），再取窗口 HHV。
+→ 双线穿越 + 变系数EMA（alpha 上限 0.2，与中源问鼎 FUN_100ec1e0 一致）。
+**置信度：铁证（FUN_1010e8b0 反编译，1715 行，变系数EMA 增量循环 + HHV 确认）**
+
+### 8.3 拐点操盘复合公式路径
+拐点操盘（exp token 里 `YDHYAD`=HLTHLP 类）= 六彩神龙(HLTHLP) + 弘历进出(HLTHBQ) + 拐点判定壳。
+exe 明文 `MA23/22`（趋势王）= `REFX(HLTHBQONLYDATA(C,1,1,1),1)` 调 HLTHBQ。
+→ 拐点操盘真数值 = HLTHLP(获利盘) 穿越 HLTHBQ(趋势线) 的拐点判定。
+
+## 9. 置信度（最终）
+- **铁证**：HLTHLP FUN_100c0b20（窗口100+阈值0.97+占比×100）、HLTHBQ FUN_1010e8b0（变系数EMA α=0.05→0.2 双线穿越）、ISDEPART FUN_100c0f20（中源问鼎同族）、XTWBREAK FUN_100cc2f0（箱体突破3/4）。
+- **exe 明文 65 条**：行情/能量/概率/弘历信号/趋势王/背离 直接可翻 Pine（§6）。
+- **拐点操盘复合公式**：底层算子已逆（HLTHLP+HLTHBQ+ISDEPART），复合壳在 exp token（私有编码），但真算法已由底层算子覆盖。

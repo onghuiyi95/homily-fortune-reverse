@@ -1,0 +1,25 @@
+//@version=5
+// Turtle Winner 拐点操盘核心：六彩神龙获利盘 HLTHLP (FUN_100c0b20 反编译铁证)
+// 真实数值公式：
+//   获利盘[i] = 100 * Σ_{j=i-100}^{i} [close[j] < close[i]*0.97 ? close[j] : 0] / Σ_{j=i-100}^{i} close[j]
+// 窗口=100，获利阈值=close*0.97，占比*100
+
+hlp_window = input.int(100, "HLTHLP窗口")
+hlp_thresh = input.float(0.97, "获利阈值系数")   // _DAT_1015e2a8 = 0.97 (float32)
+
+hlp_bars_back = math.min(hlp_window, bar_index)
+sum_profit = 0.0
+sum_total = 0.0
+for j = 0 to hlp_bars_back
+    pj = close[j]
+    sum_total := sum_total + pj
+    if pj < close * hlp_thresh
+        sum_profit := sum_profit + pj
+hlp = sum_total > 0 ? sum_profit / sum_total * 100 : 0
+
+plot(hlp, "六彩神龙获利盘HLTHLP(%)", color=hlp > 50 ? #f44336 : #4caf50)
+hline(50, "中线", color=#888888)
+
+// 浮动盘/套牢盘（HLTFDP 对称）：套牢 = 100 - 获利 （三态互斥，详见文档）
+hlf = 100 - hlp
+plot(hlf, "套牢盘(%)", color=#2196f3)
