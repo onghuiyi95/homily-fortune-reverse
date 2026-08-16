@@ -82,3 +82,23 @@ R,:)?*#*%8@YDHYAD&'<,:)?<-0<D&'<%)0%!&Seb
 ## 5. 置信度
 - **铁证**：所有 exp 用 `exp_decryptor_universal.py` 解密成功（格式B zlib+XOR），公式名 + 通达信/弘历 token 解码（`token_decode_v4.py`）均从二进制确认。
 - 拼音算子→函数映射为 dll 算子集对应（YRU=XTWBREAK 等已在预测大师/中源问鼎反编译双重确认）；个别 HLT 占位（`HLT-1`/`HLT-3`）的精确内部算法需逆 `CompMan_chs.dll` 对应函数（参考中源问鼎 `FUN_100c0f20`/`FUN_100cc2f0` 路径）。
+
+
+## 6. 关键修正：exe .rdata 含明文公式源码（比 exp token 直接！）
+之前 exp 的 token 是弘历私有编码解不出完整源码。但 **`Turtle Winner.exe` 的 `.rdata` 直接存了 65 条完整通达信公式源码常量**
+（格式 `NAME:=MA(CLOSE,N)/...` `%d` 参数占位），与 Fortune.exe 同款。这些才是能翻 Pine 的真源码。
+
+提取：`_archive/tw_exe_formula_source.txt`（65 条）。样本：
+- `HAND2RESULT`（换手王 VR量比）：`SUM(IF(CLOSE>REF(CLOSE,1),VOL,0),N)/SUM(IF(CLOSE<=REF(CLOSE,1),VOL,0),N)*100`
+- `MABIAS5`（乖离率）：`(CLOSE-MA(CLOSE,N))/MA(CLOSE,N)*100`
+- `ZHSIGNAL5-9`（弘历信号）：`(CLOSE-LLV(LOW,9))/(HHV(HIGH,9)-LLV(LOW,9))*100` + SMA(3,1) 双平滑 + MACD差
+- `READHEAD`（红白圈）：`SMA(MAX(CLOSE-REF(CLOSE,1),0),N,1)/SMA(ABS(CLOSE-REF(CLOSE,1)),N,1)*100`（RSI式）
+- `MA23/22`（趋势王 弘历进出）：`REFX(HLTHBQONLYDATA(C,1,1,1),1)`（调用 dll HLTHBQ）
+- `KDJ7/6` `DMI1/2` `RSI5/4`：金叉/死叉 + `ISDEPART(KDJ.K,1/2,m)` 顶/底背离
+
+→ **结论**：Turtle Winner 的公式真源码在 exe `.rdata`，不用解 exp token。65 条已提取，可直翻 Pine（见 `TURTLE_WINNER_EXE_FORMULAS_PINE.pine`）。
+
+## 7. 置信度（更新）
+- **铁证（exe 明文）**：65 条公式源码来自 `Turtle Winner.exe` `.rdata`，通达信格式，直接可读，非 token 推测。
+- **铁证（dll 算子）**：`HLTHBQONLYDATA`/`ISDEPART`/`HLTDMISTATIC` 等调用壳在 exe 明文，真算法在中源问鼎/预测大师 dll（已逆 FUN_100c0f20/100cc2f0）。
+- exp token（TechnicalIndex1.exp）仍含 HLT 拐点类私有编码，但 exe 明文已覆盖行情/能量/概率/弘历信号/趋势王/背离，足够翻 Pine。

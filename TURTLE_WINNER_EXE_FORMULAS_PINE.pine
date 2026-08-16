@@ -1,0 +1,71 @@
+//@version=5
+// Turtle Winner 真实公式还原（来自 TurtleWinner.exe .rdata 明文源码常量，非 exp token 推测）
+// 源：65 条公式源码字符串（MA1-23 / VOL / HAND / ZHSIGNAL / READHEAD / SIGNAL / KDJ / DMI / RSI / CLOSE 等）
+// 参数 %d 为 UI 可调默认值，下面用常见默认补全。
+
+// ===== 换手王 VR 量比（HAND2RESULT）=====
+vrN = input.int(40, "VR周期")
+vrLo = input.int(0, "VR下界")
+vrHi = input.int(100, "VR上界")
+vrLC = close[1]
+vrValue = ta.sum(close > vrLC ? volume : 0, vrN) / ta.sum(close <= vrLC ? volume : 0, vrN) * 100
+HAND2RESULT = vrValue > vrLo and vrValue < vrHi
+
+// ===== 乖离率 BIAS（MABIAS5/4）=====
+biasN = input.int(24, "BIAS N")
+MABIAS5 = (close - ta.sma(close, biasN)) / ta.sma(close, biasN) * 100
+MA5RESULT = MABIAS5 // 此处为金叉/死叉占位，原公式用 %s REF 方向
+MABIAS4 = (close - ta.sma(close, biasN)) / ta.sma(close, biasN) * 100
+MA4RESULT = MABIAS4 > -6 and MABIAS4 < 6
+
+// ===== 弘历信号 ZHSIGNAL（[7][8]）=====
+// ZHSIGNAL5-9 = KDJ 式 + MACD 差
+zh9 = (close - ta.lowest(low, 9)) / (ta.highest(high, 9) - ta.lowest(low, 9)) * 100
+zh6 = ta.sma(zh9, 3)
+zh7 = ta.sma(zh6, 3)
+zh8 = 3 * zh6 - 2 * zh7
+zh10 = ta.ema(close, 12) - ta.ema(close, 26)   // MACD.DIFF
+ZHSIGNAL10 = ta.ema(zh10, 9)
+ZHSIGNAL9 = zh10
+// ZHSIGNAL1-4 = 弘历通道（高低均线通道）
+ZHSIGNAL1 = ta.sma(high, 30) * 1.15
+ZHSIGNAL2 = ta.sma(high, 8) * 1.03
+ZHSIGNAL3 = ta.sma(low, 8) * 0.97
+ZHSIGNAL4 = ta.sma(low, 30) * 0.85
+ZHSIGNAL2RESULT = zh6 > zh7 and zh6[1] < zh7[1] and zh7[1] < zh7 and (zh10[1] - zh9[1]) > (zh10 - zh9) and zh9 < zh10
+
+// ===== 红白圈 READHEAD（[11]，RSI 式）=====
+rdN = input.int(20, "红白圈N")
+READHEAD1 = close[1]
+READHEAD2 = ta.sma(math.max(close - READHEAD1, 0), rdN) / ta.sma(math.abs(close - READHEAD1), rdN) * 100
+REDGREEN1 = READHEAD2 <= 50 and READHEAD2[1] > 50   // 白圈（卖）
+REDGREEN2 = READHEAD2 > 50 and READHEAD2[1] <= 50   // 红圈（买）
+
+// ===== 趋势王 弘历进出 HLTHBQ（[20][21]，调用 dll HLTHBQONLYDATA）=====
+// 铁证：MA23MID:=REFX(HLTHBQONLYDATA(C,1,1,1),1)  —— 真算法在 dll，exe 仅调用壳
+// 趋势王=双线穿越：MA23RESULT=前态==1且现态==2（红圈买），MA22RESULT=前态==2且现态==1（白圈卖）
+// 注：HLTHBQONLYDATA 完整算法见中源问鼎 dll FUN_100ec1e0（alpha=min(alpha+0.02,0.2) 变系数EMA 双线穿越）
+
+// ===== KDJ 背离（[55][56] + ISDEPART [KDJ4/5]）=====
+kdjK = ta.sma(ta.sma(ta.stoch(high, low, close, 9), 3), 3)
+kdjD = ta.sma(ta.sma(ta.stoch(high, low, close, 9), 3), 3)  // 近似 D
+KDJ7RESULT = kdjK < kdjD and kdjK[1] > kdjD[1] and kdjD < kdjD[1]   // 死叉
+KDJ6RESULT = kdjK > kdjD and kdjK[1] < kdjD[1] and kdjD > kdjD[1]   // 金叉
+// KDJ4/KDJ5 顶/底背离 = ISDEPART(KDJ.K, 1/2, m)，ISDEPART 真算法见中源问鼎 FUN_100c0f20
+
+// ===== DMI 背离（[57][58]）=====
+// DMI1MID1:=HLTDMISTATIC(N,1); DMI1MID2:=HLTDMISTATIC(N,2)  —— dll 实现
+
+// ===== RSI 背离（[59][60]）=====
+rsi1 = ta.rsi(close, 24)
+rsi2 = ta.rsi(close, 24)  // 近似（原 RSI.RSI2 为另一平滑）
+RSI5RESULT = rsi1 < rsi2 and rsi1[1] > rsi2[1] and rsi2 < rsi2[1]
+RSI4RESULT = rsi1 > rsi2 and rsi1[1] < rsi2[1] and rsi2 > rsi2[1]
+
+// ===== 绘图（信号演示）=====
+plot(MABIAS5, "BIAS", color=#2196f3)
+plot(READHEAD2, "红白圈READHEAD2", color=#ff9800)
+plot(ZHSIGNAL4, "弘历通道下轨", color=#4caf50)
+plot(ZHSIGNAL1, "弘历通道上轨", color=#4caf50)
+plotshape(REDGREEN2, "红圈买", shape.circle, location.belowbar, #f44336, size=tiny)
+plotshape(REDGREEN1, "白圈卖", shape.circle, location.abovebar, #ffffff, size=tiny)

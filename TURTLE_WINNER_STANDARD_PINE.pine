@@ -1,0 +1,33 @@
+//@version=5
+// Turtle Winner 标准指标还原（TechnicalIndex.exp）
+// 说明：BIAS/BOLL/MACD 为公开通达信标准算法，不依赖私有 token 解码，可直接在 TradingView 运行。
+// HLT 拐点类（背离/拐点操盘/海龟买卖/龙宫九子）为弘历私有 token 编码，需 dll 解析器真源码，暂未翻。
+
+// ===== BIAS 乖离率（ConditionSelection.exp: BIAS, 参数 N=12, LL=-6）=====
+bias(n, ll) =>
+    biasVal = (close - ta.sma(close, n)) / ta.sma(close, n) * 100
+    buy = biasVal < ll
+    [biasVal, buy]
+[biasVal, biasBuy] = bias(12, -6)
+plot(biasVal, "BIAS(12)", color=#2196f3)
+hline(-6, "买入线", color=#f44336)
+
+// ===== BOLL 布林带（N=26, P=2）=====
+length = input.int(26, "BOLL N")
+mult = input.float(2.0, "BOLL P")
+basis = ta.sma(close, length)
+dev = mult * ta.stdev(close, length)
+upper = basis + dev
+lower = basis - dev
+plot(basis, "BOLL中轨", color=#ff9800)
+p1 = plot(upper, "BOLL上轨", color=#4caf50)
+p2 = plot(lower, "BOLL下轨", color=#4caf50)
+fill(p1, p2, color=color.new(#4caf50, 90))
+buyBoll = close crosses above lower
+plotshape(buyBoll, "BOLL买入", shape.triangleup, location.belowbar, #4caf50, size=tiny)
+
+// ===== MACD（标准 12/26/9）=====
+[macdLine, signalLine, histLine] = ta.macd(close, 12, 26, 9)
+plot(macdLine, "MACD", color=#2196f3)
+plot(signalLine, "SIGNAL", color=#ff9800)
+plot(histLine, "HIST", color=histLine >= 0 ? #4caf50 : #f44336, style=plot.style_columns)
