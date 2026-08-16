@@ -162,18 +162,22 @@ EXE 公式层 4 条调用壳（铁证，`.rdata` 原文）：
 | RSI 顶背离 | `RSI2RESULT` | `"RSI.RSI1"(n,24)` | `0x00891a18` | `ISDEPART(RSI2MID1,1,%d)` |
 | RSI 底背离 | `RSI3RESULT` | `"RSI.RSI1"(n,24)` | `0x008919c0` | `ISDEPART(RSI3MID1,2,%d)` |
 
-### ⚠️ 本版 dll 未实现 ISDEPART（已全 dll 扫描坐实，2026-08-16）
-- 对 Fortune 目录 **9 个 dll 全量字符串扫描**：`ISDEPART` / `DEPART` / `背离` / `diverg` **全部 0 命中**。
-- `CompMan-chs/chs/chs/cht/enu` 三版 dll 各含 20 个 HLT 名字（`HLTHLP`/`HLTFDP`/`HLTHBQ`/`HLTWINNER`/`HLTTRIANGLE`/`HLTCHANNELS*`…），**均不含背离算子**。
-- **结论**：`ISDEPART` 是弘历公式语言的通用算子名，但**此 2018 版 Fortune 的 `CompMan-chs.dll` 未注册/未实现该算子**。EXE 公式字符串是引擎的通用模板（同族软件如盛世赢家II 的 `CompMan.dll` 才有 ISDEPART 实现），本版调用时引擎返回占位值 → **这 4 条背离条件在 2018 版 Fortune 实际不生效（降级为空/恒真）**。
-- 因此：公式**调用壳**是铁证；**背离数学本身不在此 dll**，需逆含 ISDEPART 的弘历版本（如盛世赢家II `CompMan.dll`）才能得算法——那属于另一软件的逆向，不在本 Fortune.EXE 范围内。
+### ⚠️ ISDEPART 全软件栈均未实现（已三重彻查，2026-08-16）
+| 检查对象 | 结果 |
+|---|---|
+| Fortune `CompMan-chs/chs/cht/enu` 三版 dll 字符串 | `ISDEPART`/`DEPART`/`背离` **0 命中** |
+| 盛世赢家II `CompMan.dll` 字符串 + HLT 名字表（20 个） | 无 ISDEPART |
+| Fortune.EXE 中 `ISDEPART` 4 处字符串的 Ghidra xref | **0 引用**（未注册、未实现、无调用） |
 
-> 修正：此前标注"ISDEPART 数学待逆"不准确；准确结论是**本版无实现**，非"未逆"。公式层 4 条原文仍完整列出（见上表），供跨版本对照。
+→ **结论**：`ISDEPART` 是弘历公式语言的**保留字/模板字面量**，在这套软件（Fortune 2018 + 盛世赢家II）的引擎与 dll 中**从未被注册或实现**。EXE 公式里写了 `ISDEPART(...)`，但运行时引擎找不到对应算子 → 该条件求值返回占位值 → **4 条背离条件（KDJ4/KDJ5/RSI2/RSI3）实际不生效（降级为空/恒真）**。
+→ 公式**调用壳**是铁证（4 条原文见上表）；**背离数学在本机所有弘历软件中均不存在**，需逆含 ISDEPART 实现的**其他/更新版本**弘历软件才能得到算法——那不在本 Fortune.EXE / 盛世赢家II 范围内。
+
+> 修正：此前标注"本版 dll 未实现 / 待逆"均不准确；最终结论为**全软件栈无实现**（EXE 0 xref 坐实未注册）。公式层 4 条原文仍完整列出供跨版本对照。
 
 ---
 
 ## 置信度
 
 - **铁证**：73 条原子公式原文全部来自 EXE `.rdata` 明文常量（地址见上，含背离 4 条 ISDEPART 调用壳）；6 组 `:=1` 恒真；复合 AND 门 `0x00894bc8`；组内/组间 AND（`.rdata` AND 链模板）。
-- **铁证（本版无实现）**：`ISDEPART` 背离算子在本版 `CompMan-chs.dll`（及同目录 9 个 dll）**未注册**——全 dll 字符串扫描 0 命中；4 条背离条件在本版 Fortune 实际降级不生效。公式调用壳仍完整列出供跨版本对照。
+- **铁证（全软件栈无实现）**：`ISDEPART` 背离算子在三版 Fortune dll + 盛世赢家II dll 字符串扫描 0 命中，且 EXE 中 4 处 `ISDEPART` 字符串 Ghidra xref = 0（未注册、未实现）；4 条背离条件（KDJ4/KDJ5/RSI2/RSI3）在本软件栈实际降级不生效。公式调用壳仍完整列出供跨版本对照。
 - **未坐实**：`for(stock)` 外层循环精确 C++ 函数（启动期动态调用，静态 xref 未捕获）。ISDEPART 数学需逆含该算子的弘历版本（如盛世赢家II），不在本 Fortune 范围。
