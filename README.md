@@ -57,7 +57,7 @@
 
 ## 3. 40+ 原子条件（完整清单）
 
-详见 [`SIGNAL_LOGIC.md`](SIGNAL_LOGIC.md) 第二节。节选：
+完整逐条清单（含公式原文、参数、HLT 算子对照、OR/AND 选股逻辑）见 [`SELECTION_CONDITIONS.md`](SELECTION_CONDITIONS.md)。节选：
 
 | 原子 | 公式 | 含义 |
 |---|---|---|
@@ -138,6 +138,7 @@ double* CalcSeries(double* out, int* series, int len, int flag, uint* ok) {
 .
 ├── README.md                  # 本文件
 ├── SIGNAL_LOGIC.md            # 详细逆向白皮书（架构/原子条件/预警/计算闭环）
+├── SELECTION_CONDITIONS.md    # 40+ 选股条件完整清单 + 选股逻辑（OR/AND）
 ├── formula_pseudocode.md      # 逐 K 线求值 + 原子条件 伪代码白皮书
 ├── _archive/                  # 中间产物（原始反编译、提取脚本），非人读
 │   ├── decomp/                # 逐函数 Ghidra 反编译（含 MFC 噪声）
