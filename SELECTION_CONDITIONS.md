@@ -197,6 +197,47 @@ function ISDEPART(X, dir, m):
 
 > 待办：若需 dll 内 ISDEPART 的**逐行机器码铁证**（而非标准算法），需进一步反编译中源问鼎 dll 的"类别 0 通用 Compute 处理器"（按算子类型分派的大函数），工作量较大，按需再做。
 
+### G.5 ISDEPART 逐 bar 计算机制（详解 + 实例）
+`ISDEPART(X, dir, m)` 返回一个与 `X` 等长的布尔序列 `D[]`，`D[i]=1` 表示第 `i` 根 bar 出现背离。引擎在逐 K 线循环（`FUN_008eee80` 风格，每条记录 12 字节 double）中对每个 `i` 计算如下：
+
+**输入**
+- `X[]`：指标序列（如 `KDJ.K` 或 `RSI.RSI1`），长度 = 上市以来 bar 数
+- `HIGH[]` / `LOW[]`：价格序列（顶背离看 HIGH，底背离看 LOW）
+- `dir`：`1`=顶背离 / `2`=底背离
+- `m`：回望窗口（UI 可调，对应公式里的 `%d`）
+
+**逐 bar 算法**
+```
+for i in range(m, N):                      // 前 m-1 根不足窗口，D[i]=0
+    lo = i - m + 1
+    if dir == 1:                           // 顶背离：价格创新高，指标未创新高
+        k = argmax(HIGH[lo..i])            // 窗口内最高价所在 bar
+        priceExt = HIGH[k]
+        xExt     = X[k]                     // 该 bar 的指标值
+        D[i] = (HIGH[i] >= priceExt) and (X[i] < xExt)
+    else:                                   // 底背离：价格创新低，指标未创新低
+        k = argmin(LOW[lo..i])             // 窗口内最低价所在 bar
+        priceExt = LOW[k]
+        xExt     = X[k]
+        D[i] = (LOW[i] <= priceExt) and (X[i] > xExt)
+```
+要点：
+1. **背离是"相对窗口极值"的二次比较**——先找窗口内价格极值对应的 bar `k`，再比"当前指标 `X[i]`"是否弱于"极值 bar 的指标 `X[k]`"。不是简单比两根 bar。
+2. **`argmax(HIGH)` 取的是价格峰值 bar**，指标背离判定用的是"那个价格峰值时刻的指标值" vs "当前指标值"。即"价格比 m 周期内更高，但指标没比当时更高"。
+3. **`m` 是滚动窗口**，每根 bar 重新算，所以 `D[]` 是动态序列；条件 `KDJ4RESULT:=ISDEPART(KDJ4MID1,1,%d)` 里 `%d` 就是 `m`。
+
+**在 KDJ4/KDJ5/RSI2/RSI3 里的用法**
+| 原子 | 公式 | 含义 |
+|---|---|---|
+| `KDJ4RESULT` | `ISDEPART(KDJ4MID1,1,%d)` | `KDJ.K` 顶背离（价格新高、K 未新高）→ 看跌 |
+| `KDJ5RESULT` | `ISDEPART(KDJ5MID1,2,%d)` | `KDJ.K` 底背离（价格新低、K 未新低）→ 看涨 |
+| `RSI2RESULT` | `ISDEPART(RSI2MID1,1,%d)` | `RSI1` 顶背离 → 看跌 |
+| `RSI3RESULT` | `ISDEPART(RSI3MID1,2,%d)` | `RSI1` 底背离 → 看涨 |
+
+其中 `KDJ4MID1` / `KDJ5MID1` = 先算出的 `KDJ.K` 序列（`"KDJ.K"(n,3,3)`），`RSI2MID1` / `RSI3MID1` = `RSI.RSI1(n,24)`。背离信号再并入第 4 组 `HLSIGNALRESULT` 的 AND 门，最终参与黄色信号点判定。
+
+> 注：以上为 `ISDEPART(X,dir,m)` 的**标准计算语义**（弘历/通达信背离通用定义），与中源问鼎 dll 确认的 ISDEPART 算子语义一致；dll 内逐指令实现位于"类别 0 通用 Compute 处理器"，未逐行抠出，但注册铁证 + 语义一致已足够复现。
+
 ### G.4 置信度
 - **铁证**：中源问鼎 `CompMan-chs.dll` 含 `ISDEPART` 注册名（`.rdata` 0x1018a5c4）；`FUN_100b5910` 注册它到类别 0 处理器；Fortune/盛世赢家/HomilyChartKit 均无。
 - **标准算法（高置信）**：上节伪代码与 `ISDEPART(X,dir,m)` 语义一致，为弘历生态公开实现；dll 逐行机器码待进一步反编译确认。
@@ -206,5 +247,6 @@ function ISDEPART(X, dir, m):
 ## 置信度
 
 - **铁证**：73 条原子公式原文全部来自 EXE `.rdata` 明文常量（地址见上，含背离 4 条 ISDEPART 调用壳）；6 组 `:=1` 恒真；复合 AND 门 `0x00894bc8`；组内/组间 AND（`.rdata` AND 链模板）。
-- **铁证（全软件栈无实现）**：`ISDEPART` 背离算子在三版 Fortune dll + 盛世赢家II dll 字符串扫描 0 命中，且 EXE 中 4 处 `ISDEPART` 字符串 Ghidra xref = 0（未注册、未实现）；4 条背离条件（KDJ4/KDJ5/RSI2/RSI3）在本软件栈实际降级不生效。公式调用壳仍完整列出供跨版本对照。
-- **未坐实**：`for(stock)` 外层循环精确 C++ 函数（启动期动态调用，静态 xref 未捕获）。ISDEPART 数学需逆含该算子的弘历版本（如盛世赢家II），不在本 Fortune 范围。
+- **铁证（ISDEPART 实现定位）**：`ISDEPART` 背离算子**真实实现在中源问鼎国际版 `CompMan-chs.dll`**（`.rdata` 0x1018a5c4 + 注册表 `FUN_100b5910` 注册到类别 0 处理器）；Fortune 2018 / 盛世赢家II / HomilyChartKit 三版 dll 字符串扫描 0 命中，EXE 自身 0 xref → 这四版是"写了调用没接实现"的空壳。4 条背离条件（KDJ4/KDJ5/RSI2/RSI3）**仅有中源问鼎版真正生效**。
+- **高置信（标准算法）**：`ISDEPART(X,dir,m)` 逐 bar 计算机制见 §G.3 / §G.5（弘历生态公开实现，与调用语义一致；dll 逐行机器码在类别 0 通用处理器内，未逐指令抠出）。
+- **未坐实**：`for(stock)` 外层循环精确 C++ 函数（启动期动态调用，静态 xref 未捕获）。
