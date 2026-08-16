@@ -104,3 +104,12 @@ plotshape(short_signal, "海龟卖", shape.triangledown, location.abovebar, #f44
 > - **结论**：`YDHYAD` 是弘历公式引擎的**保留私有函数名**，只存在于 exp，由引擎内部硬编码逻辑（非字符串查表）处理。静态逆向走不通。
 > - **调用形态推断**（非铁证）：`YDHYAD` 在所有拐点公式里都是第一个算子（`YDHYAD/N(0)/N+-/...`），其后跟各公式不同算法（FRACTAL/TURTLE 用 NQDZ/ZDZ 通道，QUADRUPLE 用 DMA/VOL，TRADING ALERT 用 YRU，ULTIMATE 用 DMA/MA）。推断它是**拐点类公式的统一信号入口调度器**，按参数分支到不同 HLT（通道/均线/突破）。
 > - **要破 YDHYAD 真算法**：唯一可行路 = 用户贴 Turtle Winner 公式编辑器里含 YDHYAD 的公式源码（截图/文本），直接看它调哪个 HLT 函数。
+
+## 8. 重大勘误：YDHYAD 是解码器伪造，非真实函数名
+> 用户指正："唯一的可能就是你的解码错了，我记得你之前说你自己错了"。**确认用户正确**。
+> - `token_decode_v4` 的源码逻辑：`if nm in INLINE_FUNCS or (len(nm)>=3 and nm.isupper()): 当函数名显示`
+> - 即：解码器把 exp 字节流里**任何连续大写 ASCII**（`59 44 48 59 41 44` = `YDHYAD`）直接当**函数名字符串**打印。
+> - 实际上 `59 44 48 59 41 44` 是**弘历私有 token 字节流**（每字节/每2字节是操作符编码），**不是字符串名**。
+> - 铁证：`find(b'YDHYAD')` 在 dll/exe 全文 = NF；FUN_10097040 注册表 261 个名字无 YD 开头；exp 原始解密字节 = `38 25 38 40 59 44 48 59 41 44 26 27`，`59..44` 是 token 字节，前面 `38 25 38 40`(`8%8@`) 是 tokenizer 操作符。
+> - **结论**：`YDHYAD` 是解码器误读 token 字节为真名。**所有基于 "YDHYAD=某HLT" 的推断全部作废**（包括 "YDHYAD=未知HLT算子" 也是错的，因为它根本不是名字）。
+> - **正确破法**：把 `59 44 48 59 41 44` 当字节流，找 dll 里 `0x59`/`0x44` 类 token→函数映射表（按字节值索引，非字符串名）。

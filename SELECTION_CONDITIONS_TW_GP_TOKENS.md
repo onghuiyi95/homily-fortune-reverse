@@ -61,3 +61,5 @@ DMA_line = DMA(CLOSE, N)  // 铁证 DMA token
 
 ## 原始提取
 - `_archive/tw_gp_all_tokens.txt`（10 个拐点公式的完整 token decode，含 拐点操盘/海龟买卖/龙宫九子/背离/分形/持安/活跃突破/四重底部/智能交易/终极震荡）
+
+> ⚠️ 勘误：YDHYAD 是 token_decode_v4 误读 token 字节流伪造的显示（非真实函数名，dll/exe 无此字符串）。相关推断作废。

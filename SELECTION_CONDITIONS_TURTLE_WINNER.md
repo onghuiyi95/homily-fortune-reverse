@@ -138,3 +138,5 @@ exe 明文 `MA23/22`（趋势王）= `REFX(HLTHBQONLYDATA(C,1,1,1),1)` 调 HLTHB
 - **铁证**：HLTHLP FUN_100c0b20（窗口100+阈值0.97+占比×100）、HLTHBQ FUN_1010e8b0（变系数EMA α=0.05→0.2 双线穿越）、ISDEPART FUN_100c0f20（中源问鼎同族）、XTWBREAK FUN_100cc2f0（箱体突破3/4）。
 - **exe 明文 65 条**：行情/能量/概率/弘历信号/趋势王/背离 直接可翻 Pine（§6）。
 - **拐点操盘复合公式**：底层算子已逆（HLTHLP+HLTHBQ+ISDEPART），复合壳在 exp token（私有编码），但真算法已由底层算子覆盖。
+
+> ⚠️ 勘误：YDHYAD 是 token_decode_v4 误读 token 字节流伪造的显示（非真实函数名，dll/exe 无此字符串）。相关推断作废。
