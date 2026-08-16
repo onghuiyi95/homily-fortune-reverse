@@ -1,0 +1,13 @@
+# --- build / analysis artifacts ---
+ghidra_proj/
+logs/
+_archive/
+
+# --- editor / OS ---
+.DS_Store
+*.swp
+*~
+
+# --- python ---
+__pycache__/
+*.pyc
