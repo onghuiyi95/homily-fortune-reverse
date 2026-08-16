@@ -9,8 +9,16 @@
 
 1. **6 大类 AND 门控**：最终买点 = `EMARESULT AND PROBABILILYRESULT AND ENERGYRESULT AND PRICERESULT AND MOREKLINERESULT AND HLSIGNALRESULT`（@ `0x00894bc8`，黄点 `RGB(255,255,0)`）。
 2. **6 个大类在 EXE 常量里全部 `:=1`（恒真）**——真正的过滤由 40+ 个**原子条件**决定。
-3. **⚠️ 组内 = AND（用户确认，2026-08-16）**：在某一大类标签内勾选的多个原子条件，**必须全部同时满足**该类才放行（不是 OR）。即"勾选 = 收紧过滤"。6 大类之间也是 AND → **所有勾选的原子条件同时为真才出买点**。
-   - 注：之前版本误写为"组内 OR"，无反编译支撑，已更正。拼接逻辑（C++ 如何把勾选条件用 AND 连接进各组 `*RESULT`）尚未反编译坐实，故"组内 AND"目前为用户确认 + 高置信推论，非铁证；坐实后更新本节。
+3. **⚠️ 组内 = AND（二进制铁证，2026-08-16）**：在某一大类标签内勾选的多个原子条件，**必须全部同时满足**该类才放行（不是 OR）。即"勾选 = 收紧过滤"。6 大类之间也是 AND → **所有勾选的原子条件同时为真才出买点**。
+
+   **铁证（EXE `.rdata` 模板原文，非推断）**：每组都是一条用 `AND` 固定串联的模板链，组尾是该组恒真默认 `:=1`：
+   ```
+   ... AND MA11RESULT AND MA10RESULT ... AND MA1RESULT        EMARESULT:=1
+   ... AND CLOSE11RESULT ... AND CLOSE1RESULT AND MARKETVALUERESULT   PRICERESULT:=1
+   ... AND KDJ7RESULT ... AND KDJ1RESULT AND DMI2RESULT ... AND RSI1RESULT   PROBABILILYRESULT:=1
+   ... AND VOL6RESULT ... AND VOL1RESULT                      ENERGYRESULT:=1
+   ```
+   C++ 勾选条件 N 时，仅把对应的 `XRESULT:=1` 替换为 `XRESULT:=<真实公式>`；未勾选保持 `:=1`（恒真）。因整条链是 `AND`，勾选的必须为真、未勾选的恒真 → **所有勾选条件必同时为真 = 组内 AND**。这推翻了早期误写的 OR（无据猜测），已更正。
 4. **无勾选 = 该类恒真**（放行，因 EXE 里各组 `:=1` 默认真，C++ 只在勾选时插入约束）。
 5. **逐股现算**：对股票范围内每只股，引擎（`FormulaBase`/`FUN_008eee80`）逐 K 线求值每个原子条件，末尾做 AND 门判定。改 filter → 全重算（无结果缓存）。
 
@@ -155,6 +163,5 @@ buy_signal = (group_pass("MA",       checked_ma)
 ---
 
 ## 置信度
-- **铁证**：73 个原子条件公式全部来自 EXE `.rdata` 明文常量（地址见上）；6 组 `:=1` 硬编码；复合 AND 门 `0x00894bc8`。
-- **用户确认 + 高置信（未坐实拼接代码）**：组内 AND / 组间 AND 语义（由复合公式结构 + UI 勾选对话框推出；用户 2026-08-16 确认"肯定是 AND 不是 OR"，已更正旧版误写的 OR）。C++ 拼接代码待反编译 `CPageSignalDlg` 坐实。
+- **铁证**：73 个原子条件公式全部来自 EXE `.rdata` 明文常量（地址见上）；6 组 `:=1` 硬编码；复合 AND 门 `0x00894bc8`；**组内 AND 由 `.rdata` 模板的 `AND XRESULT...` 固定串联链证实**（勾选=把 `:=1` 替换为真实公式，未勾=恒真）。
 - **未坐实**：`for(stock)` 外层循环精确 C++ 函数（被启动期函数指针动态调用，静态 xref 未捕获）。
