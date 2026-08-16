@@ -38,7 +38,7 @@ for i in [0, len-1]:
 > - `NQDZ`/`ZDZ`（通道上下轨）= **13 次** ← 核心
 > - `YRU`=XTWBREAK 突破 = **9 次** ← 核心
 > - `ZRU`（穿越/拐点）= **5 次** ← 核心判定
-> - `YDHYAD`=HLTHLP 获利盘 = **仅 2 次**，且出现在公式**尾部** → 次级过滤，**非核心**
+> - `YDHYAD`=未知 HLT 算子（**不是** HLTHLP！之前误判）→ 仅 2 次，尾部，次级过滤
 
 > 结论：海龟买卖核心 = **唐奇安通道突破**（NQDZ/ZDZ 通道 + YRU/XTWBREAK 突破 + ZRU 穿越），
 > 获利盘(HLTHLP) 只是尾部 2 次的次级过滤条件，不是海龟买卖的本质。
@@ -49,7 +49,7 @@ for i in [0, len-1]:
 - `NQDZ` / `ZDZ` = 通道上/下轨（`HLTCHANNELSXSTD` 输出，FUN_1010c720 + FUN_1010c190 均值通道）
 - `YRU` = XTWBREAK（箱体突破，FUN_100cc2f0）：`YRU(3)` 上突破 / `YRU(4)` 下突破
 - `ZRU` = 拐点/穿越判定（核心）
-- `YDHYAD` = HLTHLP（六彩神龙获利盘，FUN_100c0b20）→ **仅尾部 2 次，次级过滤**
+- `YDHYAD` = 未知 HLT 算子（**不是** HLTHLP！之前误判；YDHYAD 不在 dll 字符串表，真实身份需反编译 token→函数表确认）→ 仅尾部 2 次，次级过滤
 - `DMA` = 动态均线
 - 结构：**海龟买卖 = 价格突破唐奇安均值通道(NQDZ/ZDZ) + XTWBREAK(YRU) 突破 + ZRU 穿越判定**（获利盘为尾部附加过滤）
 
@@ -69,7 +69,7 @@ lower = channel_mean - band   // ZDZ 下轨
 // XTWBREAK(3) 上突破 / XTWBREAK(4) 下突破 = 海龟买卖核心信号
 long_signal = ta.cross(close, upper)    // YRU(3) / ZRU 穿越
 short_signal = ta.cross(close, lower)   // YRU(4) / ZRU 穿越
-// 注：YDHYAD(HLTHLP 获利盘) 仅在公式尾部出现 2 次，是次级过滤，不作为核心买卖条件
+// 注：YDHYAD(未知 HLT 算子) 仅在公式尾部出现 2 次，是次级过滤，不作为核心买卖条件
 plot(upper, "海龟上轨", color=#4caf50)
 plot(lower, "海龟下轨", color=#f44336)
 plotshape(long_signal, "海龟买", shape.triangleup, location.belowbar, #4caf50, size=tiny)

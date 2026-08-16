@@ -44,17 +44,17 @@ DMA((,)*TEXFZZSDMA1,(-DYXAG(VYFN1PZSDMA1,(()N1)*VYFYN
 ## 2. 拐点类 HLT 公式（TechnicalIndex1.exp）
 公式组（每组含 HLT 子公式）：
 - **分形交易**（`HLT-1`）
-- **拐点操盘**（`HLT-1`，@ 0x42009）：token `YDHYAD` 等
+- **拐点操盘**（`HLT-1`，@ 0x42009）：token `YDHYAD(未知HLT算子)` 等
 - **海龟买卖**（`HLT-3`，@ 0x43840）
 - **龙宫九子**（`HLT-1`，交易提醒 @ 0x50707）
 - 持安通道 / 活跃突破 / 四重底部 / 智能交易 / 终极震荡
 
 ### 拐点操盘 token 解码（@ 0x42009 段）
 ```
-R,:)?*#*%8@YDHYAD&'<,:)?<-0<D&'<%)0%!&Seb
+R,:)?*#*%8@YDHYAD(未知HLT算子)&'<,:)?<-0<D&'<%)0%!&Seb
 >):ZRU@YXXHEH@@QXHBH@  >@ !/ DY\AHEH+$';-AAHGH@  >@ !/ DY\AHEH$$>@$'?DY\AAAA
 ```
-映射：`YDHYAD`=`HLTHLP` 类（六彩神龙获利盘），`DY\AHEH`=某种价格/成本线，`AAHGH`=阈值。
+映射：`YDHYAD(未知HLT算子)`=`HLTHLP` 类（六彩神龙获利盘），`DY\AHEH`=某种价格/成本线，`AAHGH`=阈值。
 
 ### 海龟买卖 token 解码（@ 0x43840 段）
 ```
@@ -68,7 +68,7 @@ R,:)?*#*%8@YDHYAD&'<,:)?<-0<D&'<%)0%!&Seb
 |---|---|---|
 | `TechnicalIndex1.exp` HLT 公式 | 八大天王 XTWBREAK/ISDEPART | `FUN_100cc2f0`/`FUN_100c0f20` |
 | `HLT-1`/`HLT-3` 算子 | `XTWBREAK`/`ISDEPART` | `HLTHLP`/`HLTFDP` |
-| token 体系：通达信/弘历拼音算子（YRU/YDHYAD）| 同 | 同 |
+| token 体系：通达信/弘历拼音算子（YRU/YDHYAD(未知HLT算子)）| 同 | 同 |
 
 → Turtle Winner 是弘历系**最老**版本，其 `TechnicalIndex1.exp` 的 HLT 拐点公式 = 预测大师八大天王的算法前身。
 
@@ -130,7 +130,7 @@ for i in 0..N-1:
 **置信度：铁证（FUN_1010e8b0 反编译，1715 行，变系数EMA 增量循环 + HHV 确认）**
 
 ### 8.3 拐点操盘复合公式路径
-拐点操盘（exp token 里 `YDHYAD`=HLTHLP 类）= 六彩神龙(HLTHLP) + 弘历进出(HLTHBQ) + 拐点判定壳。
+拐点操盘（exp token 里 `YDHYAD(未知HLT算子)`=HLTHLP 类）= 六彩神龙(HLTHLP) + 弘历进出(HLTHBQ) + 拐点判定壳。
 exe 明文 `MA23/22`（趋势王）= `REFX(HLTHBQONLYDATA(C,1,1,1),1)` 调 HLTHBQ。
 → 拐点操盘真数值 = HLTHLP(获利盘) 穿越 HLTHBQ(趋势线) 的拐点判定。
 
