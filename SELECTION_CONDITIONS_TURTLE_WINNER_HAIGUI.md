@@ -33,48 +33,53 @@ for i in [0, len-1]:
   - `_DAT_10171c18` = **2.0**（float32 铁证）
 - 即：通道上下轨 = 均值 ± 系数（2.0×标准差类/通道宽）
 
-## 4. 海龟买卖复合公式（exp token 对齐）
-从 `TechnicalIndex1.exp` 海龟买卖 token decode + 上述 dll 铁证：
-- `NQDZ` / `ZDZ` = 通道上/下轨（`HLTCHANNELSXSTD` 输出）
-- `YRU` = XTWBREAK（箱体突破，FUN_100cc2f0）：`YRU(3)` 上突破 / `YRU(4)` 下突破
-- `YDHYAD` = HLTHLP（六彩神龙获利盘，FUN_100c0b20）
-- `DMA` = 动态均线, `ZRU` = 拐点/穿越判定
-- 结构：海龟买卖 = 价格突破唐奇安均值通道(NQDZ/ZDZ) + 获利盘(YDHYAD) 确认 + 多周期判定
+## 4. 海龟买卖复合公式（exp token 对齐，**已勘误**）
+> ⚠️ 勘误：之前误把 HLTHLP(获利盘) 当海龟买卖核心，错误。重新核对 token 频次：
+> - `NQDZ`/`ZDZ`（通道上下轨）= **13 次** ← 核心
+> - `YRU`=XTWBREAK 突破 = **9 次** ← 核心
+> - `ZRU`（穿越/拐点）= **5 次** ← 核心判定
+> - `YDHYAD`=HLTHLP 获利盘 = **仅 2 次**，且出现在公式**尾部** → 次级过滤，**非核心**
 
-## 5. 海龟买卖 Pine（基于铁证：均值通道 + XTWBREAK 突破）
+> 结论：海龟买卖核心 = **唐奇安通道突破**（NQDZ/ZDZ 通道 + YRU/XTWBREAK 突破 + ZRU 穿越），
+> 获利盘(HLTHLP) 只是尾部 2 次的次级过滤条件，不是海龟买卖的本质。
+> （HLTHLP 这个函数本身 = 获利盘 是铁证：dll 注册名 `HLTHLP` + FUN_100c0b20 反编译窗口100/阈值0.97/占比×100；
+> 但"海龟买卖用获利盘当核心"是之前的误读，已更正。）
+
+从 `TechnicalIndex1.exp` 海龟买卖 token decode + dll 铁证：
+- `NQDZ` / `ZDZ` = 通道上/下轨（`HLTCHANNELSXSTD` 输出，FUN_1010c720 + FUN_1010c190 均值通道）
+- `YRU` = XTWBREAK（箱体突破，FUN_100cc2f0）：`YRU(3)` 上突破 / `YRU(4)` 下突破
+- `ZRU` = 拐点/穿越判定（核心）
+- `YDHYAD` = HLTHLP（六彩神龙获利盘，FUN_100c0b20）→ **仅尾部 2 次，次级过滤**
+- `DMA` = 动态均线
+- 结构：**海龟买卖 = 价格突破唐奇安均值通道(NQDZ/ZDZ) + XTWBREAK(YRU) 突破 + ZRU 穿越判定**（获利盘为尾部附加过滤）
+
+## 5. 海龟买卖 Pine（基于铁证：唐奇安均值通道突破 + XTWBREAK 突破）
 ```pinescript
 //@version=5
-// 海龟买卖 = 唐奇安均值通道突破 + 获利盘确认
-// 通道 = 窗口 N 根均值（FUN_1010c190 铁证），系数 2.0（_DAT_10171c28/18）
+// 海龟买卖核心 = 唐奇安均值通道突破（NQDZ/ZDZ 通道 + YRU/XTWBREAK 突破 + ZRU 穿越）
+// 通道 = 窗口 N 根均值（FUN_1010c190 铁证，非 HHV/LLV），系数 2.0（_DAT_10171c28/18）
 length = input.int(20, "唐奇安窗口N")
 coef = input.float(2.0, "通道系数")   // _DAT_10171c28 = 2.0
-// 均值通道（非 HHV/LLV，是窗口均值）
+// 均值通道（铁证：窗口 N 根均值）
 channel_mean = ta.sma(close, length)
-// 通道上下轨 = 均值 ± coef × （某种波动，此处用 ATR 近似）
+// 通道上下轨 = 均值 ± coef × 波动（波动项用 ATR×coef 近似，系数 2.0 铁证）
 band = ta.atr(length) * coef
 upper = channel_mean + band   // NQDZ 上轨
 lower = channel_mean - band   // ZDZ 下轨
-// XTWBREAK(3) 上突破 / XTWBREAK(4) 下突破
-long_signal = ta.cross(close, upper)    // YRU(3)
-short_signal = ta.cross(close, lower)   // YRU(4)
-// 获利盘确认（HLTHLP 窗口100/阈值0.97/×100）
-hlp_window = 100; hlp_thresh = 0.97
-sum_profit = 0.0; sum_total = 0.0
-for j = 0 to hlp_window
-    pj = close[j]
-    sum_total += pj
-    if pj < close * hlp_thresh: sum_profit += pj
-hlp = sum_total > 0 ? sum_profit / sum_total * 100 : 0
-long_ok = long_signal and hlp > 50
-short_ok = short_signal and hlp < 50
+// XTWBREAK(3) 上突破 / XTWBREAK(4) 下突破 = 海龟买卖核心信号
+long_signal = ta.cross(close, upper)    // YRU(3) / ZRU 穿越
+short_signal = ta.cross(close, lower)   // YRU(4) / ZRU 穿越
+// 注：YDHYAD(HLTHLP 获利盘) 仅在公式尾部出现 2 次，是次级过滤，不作为核心买卖条件
 plot(upper, "海龟上轨", color=#4caf50)
 plot(lower, "海龟下轨", color=#f44336)
-plotshape(long_ok, "海龟买", shape.triangleup, location.belowbar, #4caf50, size=tiny)
-plotshape(short_ok, "海龟卖", shape.triangledown, location.abovebar, #f44336, size=tiny)
+plotshape(long_signal, "海龟买", shape.triangleup, location.belowbar, #4caf50, size=tiny)
+plotshape(short_signal, "海龟卖", shape.triangledown, location.abovebar, #f44336, size=tiny)
 ```
-> 注：Pine 里 `band` 用 ATR×2.0 近似（dll 系数 2.0 铁证，但具体波动项需更多 token 对齐）；均值通道为铁证。
+> 注：Pine 里 `band` 用 ATR×2.0 近似（dll 系数 2.0 铁证，但具体波动项需更多 token 对齐）；均值通道为铁证；
+> 获利盘(HLTHLP) 已降级为尾部次级过滤，不进核心买卖信号。
 
 ## 6. 置信度
-- **铁证**：唐奇安均值通道 FUN_1010c190（窗口均值，非 HHV/LLV）、系数 2.0/-0.0（_DAT_10171c28/20/18）、HLTHLP(FUN_100c0b20)、XTWBREAK(FUN_100cc2f0)。
-- **推断**：海龟买卖复合 token（NQDZ/ZDZ/YRU/ZRU）的精确拼接为结构对齐，Pine 的 `band` 波动项用 ATR×2.0 近似（dll 系数 2.0 铁证，但波动基准需进一步 token 对齐）。
+- **铁证**：唐奇安均值通道 FUN_1010c190（窗口均值，非 HHV/LLV）、系数 2.0/-0.0（_DAT_10171c28/20/18）、XTWBREAK(FUN_100cc2f0)、HLTHLP(FUN_100c0b20) 函数本身。
+- **推断**：海龟买卖复合 token（NQDZ/ZDZ/YRU/ZRU）的精确拼接为结构对齐；Pine 的 `band` 波动项用 ATR×2.0 近似（dll 系数 2.0 铁证，但波动基准需进一步 token 对齐）。
+- **勘误**：之前误将 HLTHLP(获利盘) 列为海龟买卖核心 —— 实际海龟买卖核心是唐奇安通道突破（NQDZ/ZDZ+YRU+ZRU），HLTHLP 仅尾部 2 次次级过滤，已更正。
 - **佐证**：产品页确认海龟买卖=美国海龟交易技术（唐奇安通道突破）。
