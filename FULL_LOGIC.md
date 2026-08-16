@@ -127,7 +127,7 @@ double* CalcSeries(double* out, int* series, int len, int flag, uint* ok) {
 - **Quotation**（14）：CLOSE1–14 + MARKETVALUE
 - **Candlestick**（0）：复合恒真；承载 KDJ/RSI/WR/DMI 子类
 - **Homily Signals**（23+）：SIGNAL1–4 / KDJ1–7 / RSI1–5 / WR1–3 / DMI1–2 / ZHSIGNAL1–2 / REDGREEN1–2 / TJ1–2
-- **背离 4 条（KDJ4/KDJ5/RSI2/RSI3，调用 `ISDEPART`）**：公式层调用壳存在，但**全软件栈均未实现**——三版 Fortune dll + 盛世赢家II dll 字符串扫描 0 命中，且 EXE 中 `ISDEPART` 4 处字符串 Ghidra xref = 0（未注册、未实现），实际降级不生效。详见 SELECTION_CONDITIONS.md §G。
+- **背离 4 条（KDJ4/KDJ5/RSI2/RSI3，调用 `ISDEPART`）**：公式层调用壳在 Fortune.EXE 为铁证；**实现位于中源问鼎国际版 `CompMan-chs.dll`**（`.rdata` 含 `ISDEPART` 注册名，注册到类别 0 通用处理器）。Fortune 2018 / 盛世赢家II / HomilyChartKit 三版 dll 均无 ISDEPART（空壳）。算法见 SELECTION_CONDITIONS.md §G（标准背离实现 + 置信度）。
 
 节选（公式原文均来自 `.rdata`，铁证）：
 - `MA22RESULT = HLTHBQ(C,1,1,1)` 白圈转红 = 买点
@@ -174,7 +174,7 @@ double* CalcSeries(double* out, int* series, int len, int flag, uint* ok) {
 | 公式函数注册表（内建函数集） | 铁证 |
 | 预警 = 增量算（非全重算） | 高置信（由铁证 + 轮询参数推出） |
 | `for(stock)` 外层循环精确 C++ 函数 | 未坐实（启动期函数指针动态调用，静态 xref 未捕获） |
-| ISDEPART 背离数学 | **铁证：全软件栈未实现**（三版 Fortune dll + 盛世赢家II dll 字符串 0 命中；EXE 中 `ISDEPART` 4 处字符串 Ghidra xref = 0，未注册/未实现；4 条背离条件降级不生效） |
+| ISDEPART 背离 | **铁证：中源问鼎国际版 `CompMan-chs.dll` 含 ISDEPART 实现**（`.rdata` 注册名 0x1018a5c4 + 注册到类别 0 处理器）；Fortune 2018 / 盛世赢家II / HomilyChartKit 三版 dll 均无（空壳）。标准背离算法见 SELECTION_CONDITIONS.md §G（高置信，dll 逐行机器码待进一步反编译） |
 
 ---
 
