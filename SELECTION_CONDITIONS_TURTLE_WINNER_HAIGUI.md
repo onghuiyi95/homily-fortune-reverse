@@ -95,3 +95,12 @@ plotshape(short_signal, "海龟卖", shape.triangledown, location.abovebar, #f44
 - **推断**：海龟买卖复合 token（NQDZ/ZDZ/YRU/ZRU）的精确拼接为结构对齐；Pine 的 `band` 波动项用 ATR×2.0 近似（dll 系数 2.0 铁证，但波动基准需进一步 token 对齐）。
 - **勘误**：之前误将 HLTHLP(获利盘) 列为海龟买卖核心 —— 实际海龟买卖核心是唐奇安通道突破（NQDZ/ZDZ+YRU+ZRU），HLTHLP 仅尾部 2 次次级过滤，已更正。
 - **佐证**：产品页确认海龟买卖=美国海龟交易技术（唐奇安通道突破）。
+
+## 7. YDHYAD 真实身份破解（诚实结论：静态逆向死胡同）
+> 用户要求继续破解 YDHYAD。经系统核查，**静态逆向无法确认其真实算法**：
+> - `YDHYAD` 在 exp 解密后是**明文 ASCII**（`59 44 48 59 41 44`），但在 **dll 和 exe 里完全没有此字符串**（连字节都不存在）。
+> - dll 注册表 `FUN_10097040`（261 个名字）**无任何 YD 开头项**；dll 私有名表（0x15cb00 区域）也无 `YDHYAD`。
+> - `YDHY` 4 字节序列在 dll 里找不到 → 无数字 token 表可查。
+> - **结论**：`YDHYAD` 是弘历公式引擎的**保留私有函数名**，只存在于 exp，由引擎内部硬编码逻辑（非字符串查表）处理。静态逆向走不通。
+> - **调用形态推断**（非铁证）：`YDHYAD` 在所有拐点公式里都是第一个算子（`YDHYAD/N(0)/N+-/...`），其后跟各公式不同算法（FRACTAL/TURTLE 用 NQDZ/ZDZ 通道，QUADRUPLE 用 DMA/VOL，TRADING ALERT 用 YRU，ULTIMATE 用 DMA/MA）。推断它是**拐点类公式的统一信号入口调度器**，按参数分支到不同 HLT（通道/均线/突破）。
+> - **要破 YDHYAD 真算法**：唯一可行路 = 用户贴 Turtle Winner 公式编辑器里含 YDHYAD 的公式源码（截图/文本），直接看它调哪个 HLT 函数。
