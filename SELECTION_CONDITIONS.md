@@ -147,13 +147,14 @@
 
 ---
 
-## G. 背离专题（你点名补齐的 4 条）
+## G. 背离专题（你点名补齐的 4 条 — 重要校准）
 
-`ISDEPART(X, dir, m)` 是**背离判定算子**，由 `CompMan-chs.dll` 提供实现：
+`ISDEPART(X, dir, m)` 是弘历公式语言的**背离判定算子**调用：
 - `dir = 1` → **顶背离**（价格新高但指标不新高）
 - `dir = 2` → **底背离**（价格新低但指标不新低）
-- `m` → 回望周期参数（UI 可调，`%d`）
+- `m` → 回望周期（UI 可调，`%d`）
 
+EXE 公式层 4 条调用壳（铁证，`.rdata` 原文）：
 | 背离类型 | 原子 | 指标 | EXE 地址 | 调用原文 |
 |---|---|---|---|---|
 | KDJ 顶背离 | `KDJ4RESULT` | `"KDJ.K"(n,3,3)` | `0x008914d4` | `ISDEPART(KDJ4MID1,1,%d)` |
@@ -161,11 +162,18 @@
 | RSI 顶背离 | `RSI2RESULT` | `"RSI.RSI1"(n,24)` | `0x00891a18` | `ISDEPART(RSI2MID1,1,%d)` |
 | RSI 底背离 | `RSI3RESULT` | `"RSI.RSI1"(n,24)` | `0x008919c0` | `ISDEPART(RSI3MID1,2,%d)` |
 
-> ⚠️ **数学实现待坐实**：`ISDEPART` 的真实算法在 `CompMan-chs.dll` 的 HLT 背离算子（dll 内以编号引用，名字字符串不在 dll 的 `.rdata` 中，需用 opcode 映射定位，同族 `盛世赢家II/CompMan.dll` 的 HLT 注册表模式可照做）。EXE 侧只给出**调用壳 + 参数**（上面 4 条原文即铁证），背离数学本身尚未反编译。需要我去逆 `CompMan-chs.dll` 的 ISDEPART 才算完。
+### ⚠️ 本版 dll 未实现 ISDEPART（已全 dll 扫描坐实，2026-08-16）
+- 对 Fortune 目录 **9 个 dll 全量字符串扫描**：`ISDEPART` / `DEPART` / `背离` / `diverg` **全部 0 命中**。
+- `CompMan-chs/chs/chs/cht/enu` 三版 dll 各含 20 个 HLT 名字（`HLTHLP`/`HLTFDP`/`HLTHBQ`/`HLTWINNER`/`HLTTRIANGLE`/`HLTCHANNELS*`…），**均不含背离算子**。
+- **结论**：`ISDEPART` 是弘历公式语言的通用算子名，但**此 2018 版 Fortune 的 `CompMan-chs.dll` 未注册/未实现该算子**。EXE 公式字符串是引擎的通用模板（同族软件如盛世赢家II 的 `CompMan.dll` 才有 ISDEPART 实现），本版调用时引擎返回占位值 → **这 4 条背离条件在 2018 版 Fortune 实际不生效（降级为空/恒真）**。
+- 因此：公式**调用壳**是铁证；**背离数学本身不在此 dll**，需逆含 ISDEPART 的弘历版本（如盛世赢家II `CompMan.dll`）才能得算法——那属于另一软件的逆向，不在本 Fortune.EXE 范围内。
+
+> 修正：此前标注"ISDEPART 数学待逆"不准确；准确结论是**本版无实现**，非"未逆"。公式层 4 条原文仍完整列出（见上表），供跨版本对照。
 
 ---
 
 ## 置信度
 
 - **铁证**：73 条原子公式原文全部来自 EXE `.rdata` 明文常量（地址见上，含背离 4 条 ISDEPART 调用壳）；6 组 `:=1` 恒真；复合 AND 门 `0x00894bc8`；组内/组间 AND（`.rdata` AND 链模板）。
-- **待坐实**：`ISDEPART` 背离数学（在 `CompMan-chs.dll`，需逆 HLT 算子）；`for(stock)` 外层循环精确 C++ 函数（启动期动态调用，静态 xref 未捕获）。
+- **铁证（本版无实现）**：`ISDEPART` 背离算子在本版 `CompMan-chs.dll`（及同目录 9 个 dll）**未注册**——全 dll 字符串扫描 0 命中；4 条背离条件在本版 Fortune 实际降级不生效。公式调用壳仍完整列出供跨版本对照。
+- **未坐实**：`for(stock)` 外层循环精确 C++ 函数（启动期动态调用，静态 xref 未捕获）。ISDEPART 数学需逆含该算子的弘历版本（如盛世赢家II），不在本 Fortune 范围。
